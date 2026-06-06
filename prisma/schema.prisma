@@ -1,0 +1,122 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model College {
+  id          Int      @id @default(autoincrement())
+  name        String
+  slug        String   @unique
+  type        CollegeType
+  established Int?
+  city        String
+  state       String
+  rating      Float    @default(0)
+  totalReviews Int     @default(0)
+  feesMin     Int      @default(0)
+  feesMax     Int      @default(0)
+  description String?  @db.Text
+  website     String?
+  logoUrl     String?
+  bannerUrl   String?
+  approvedBy  String[] @default([])
+  nirfRank    Int?
+  examsAccepted String[] @default([])
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  courses     Course[]
+  placements  Placement[]
+  reviews     Review[]
+  cutoffs     Cutoff[]
+  @@index([state])
+  @@index([city])
+  @@index([rating])
+  @@index([feesMin, feesMax])
+  @@index([nirfRank])
+  @@index([type])
+}
+
+enum CollegeType {
+  GOVERNMENT
+  PRIVATE
+  DEEMED
+  AUTONOMOUS
+}
+
+model Course {
+  id            Int      @id @default(autoincrement())
+  collegeId     Int
+  college       College  @relation(fields: [collegeId], references: [id], onDelete: Cascade)
+  name          String
+  degree        String
+  branch        String?
+  duration      String?
+  feesTotal     Int      @default(0)
+  feesPerYear   Int?
+  eligibility   String?  @db.Text
+  seats         Int?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  @@index([collegeId])
+  @@index([degree])
+}
+
+model Placement {
+  id              Int      @id @default(autoincrement())
+  collegeId       Int
+  college         College  @relation(fields: [collegeId], references: [id], onDelete: Cascade)
+  year            Int
+  averagePackage  Float?
+  highestPackage  Float?
+  medianPackage   Float?
+  placementRate   Float?
+  topRecruiters   String[] @default([])
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  @@unique([collegeId, year])
+  @@index([collegeId])
+}
+
+model Review {
+  id          Int      @id @default(autoincrement())
+  collegeId   Int
+  college     College  @relation(fields: [collegeId], references: [id], onDelete: Cascade)
+  authorName  String   @default("Anonymous")
+  rating      Float
+  title       String?
+  body        String   @db.Text
+  academicsRating     Float?
+  infrastructureRating Float?
+  placementsRating    Float?
+  campusLifeRating    Float?
+  isVerified  Boolean  @default(false)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  @@index([collegeId])
+  @@index([rating])
+}
+
+model Cutoff {
+  id          Int      @id @default(autoincrement())
+  collegeId   Int
+  college     College  @relation(fields: [collegeId], references: [id], onDelete: Cascade)
+  exam        String
+  year        Int
+  category    String   @default("OPEN")
+  openingRank Int?
+  closingRank Int?
+  cutoffScore Float?
+  courseName  String?
+  quota       String   @default("AI")
+  gender      String   @default("Gender-Neutral")
+  round       Int      @default(6)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  @@index([collegeId])
+  @@index([exam])
+  @@index([exam, year, category, quota, gender, round])
+}
